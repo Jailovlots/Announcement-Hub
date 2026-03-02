@@ -1,0 +1,171 @@
+Announcement App (Expo + React Native)
+
+Create a mobile application called **“ZDSPGC Announcement App”** using **React Native with Expo**.
+
+The app is a school announcement system with two roles: **Admin and Student**.
+
+Use:
+
+* Expo (latest version)
+* React Navigation
+* Firebase (Authentication + Firestore)
+* Expo Notifications
+* Functional components with React Hooks
+* Clean folder structure
+
+
+---
+
+## 👥 USER ROLES
+
+Implement role-based authentication:
+
+* If role === "admin" → Navigate to *Admin Dashboard*
+* If role === "student" → Navigate to *Student Dashboard*
+
+---
+
+## 🔐 AUTHENTICATION SYSTEM
+
+Create:
+
+1. Login Screen
+
+   * Email
+   * Password
+   * Login button
+
+2. Register Screen (Students only)
+
+   * Name
+   * Email
+   * Password
+
+3. Store user role in Firestore:
+   Collection: users
+
+   
+   {
+     id: string,
+     name: string,
+     email: string,
+     role: "admin" | "student",
+     createdAt: timestamp
+   }
+   
+
+4. Admin account is pre-created manually in Firebase.
+
+5. Add logout functionality.
+
+---
+
+## 👨‍🎓 STUDENT FEATURES
+
+### Student Dashboard
+
+* Fetch announcements from Firestore
+* Display in FlatList
+* Card-style design
+* Pull-to-refresh
+* Search bar
+* Filter by category:
+
+  * Academic
+  * Events
+  * Emergency
+  * General
+
+### Announcement Details Screen
+
+* Title
+* Description
+* Category
+* Date Posted
+* Posted By
+* Optional Image
+
+Firestore Collection: announcements
+
+{
+  id: string,
+  title: string,
+  description: string,
+  category: string,
+  imageUrl: string,
+  createdAt: timestamp,
+  createdBy: string
+}
+
+---
+
+## 👨‍💼 ADMIN FEATURES
+
+### Admin Dashboard
+
+* Show total announcements count
+* Button: Add Announcement
+* Button: Manage Announcements
+
+### Add Announcement Screen
+
+* Title input
+* Description input
+* Category dropdown
+* Optional image upload (use Expo ImagePicker)
+* Save to Firestore
+* Send push notification to students
+
+### Manage Announcements
+
+* Edit announcement
+* Delete announcement
+
+---
+
+## 🔔 PUSH NOTIFICATIONS
+
+Use:
+
+* expo-notifications
+* Store device push token in Firestore under users collection
+* Send notification when new announcement is posted
+
+---
+
+## 🗂 FOLDER STRUCTURE
+
+/src
+  /screens
+  /components
+  /navigation
+  /services
+  /context
+  /utils
+/firebase.js
+/App.js
+
+---
+
+## 🎨 UI DESIGN
+
+* Beige & red school theme
+* Modern card layout
+* Clean typography
+* Loading indicators
+* Empty state (No announcements yet)
+* Responsive for Android
+
+---
+
+## 📦 REQUIREMENTS
+
+* Clean and modular code
+* Use Context API for authentication
+* Use React Navigation (Stack + Bottom Tabs)
+* Proper error handling
+* Ready to run with:
+
+  
+  npx expo start
+  
