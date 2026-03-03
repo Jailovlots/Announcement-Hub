@@ -1,5 +1,14 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, ReactNode } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import {
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+  User as FirebaseUser,
+} from "firebase/auth";
+import { doc, getDoc, setDoc } from "firebase/firestore";
+import { auth, db } from "../lib/firebase";
 
 export type UserRole = "admin" | "student";
 
@@ -21,78 +30,72 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-const USERS_KEY = "@zdspgc_users";
-const CURRENT_USER_KEY = "@zdspgc_current_user";
-
-const DEFAULT_ADMIN: User & { password: string } = {
-  id: "admin-001",
-  name: "Administrator",
-  email: "admin@zdspgc.edu",
-  role: "admin",
-  createdAt: new Date().toISOString(),
-  password: "admin123",
-};
+const CURRENT_USER_KEY = "@zdspgc_current_user"; // Optional: keep for really fast startup if offline
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    initializeStorage();
+    // Attempt fast local load
+    AsyncStorage.getItem(CURRENT_USER_KEY).then((json) => {
+      if (json && !user) {
+        setUser(JSON.parse(json));
+      }
+    });
+
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      try {
+        if (firebaseUser) {
+          // Fetch user details from Firestore
+          const userDoc = await getDoc(doc(db, "users", firebaseUser.uid));
+          if (userDoc.exists()) {
+            const userData = userDoc.data() as Omit<User, "id">;
+            const fullUser: User = { id: firebaseUser.uid, ...userData };
+            setUser(fullUser);
+            await AsyncStorage.setItem(CURRENT_USER_KEY, JSON.stringify(fullUser));
+          } else {
+            console.warn("User document not found in Firestore.");
+            setUser(null);
+            await AsyncStorage.removeItem(CURRENT_USER_KEY);
+          }
+        } else {
+          setUser(null);
+          await AsyncStorage.removeItem(CURRENT_USER_KEY);
+        }
+      } catch (e) {
+        console.error("Auth state change error:", e);
+      } finally {
+        setIsLoading(false);
+      }
+    });
+
+    return () => unsubscribe();
   }, []);
 
-  const initializeStorage = async () => {
-    try {
-      const existing = await AsyncStorage.getItem(USERS_KEY);
-      if (!existing) {
-        await AsyncStorage.setItem(USERS_KEY, JSON.stringify([DEFAULT_ADMIN]));
-      }
-      const currentUserJson = await AsyncStorage.getItem(CURRENT_USER_KEY);
-      if (currentUserJson) {
-        setUser(JSON.parse(currentUserJson));
-      }
-    } catch (e) {
-      console.error("Storage init error:", e);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const login = async (email: string, password: string) => {
-    const usersJson = await AsyncStorage.getItem(USERS_KEY);
-    const users: Array<User & { password: string }> = JSON.parse(usersJson || "[]");
-    const found = users.find(
-      (u) => u.email.toLowerCase() === email.toLowerCase() && u.password === password
-    );
-    if (!found) throw new Error("Invalid email or password.");
-    const { password: _, ...userWithoutPassword } = found;
-    await AsyncStorage.setItem(CURRENT_USER_KEY, JSON.stringify(userWithoutPassword));
-    setUser(userWithoutPassword);
+    await signInWithEmailAndPassword(auth, email, password);
+    // onAuthStateChanged will handle fetching Firestore user data
   };
 
   const register = async (name: string, email: string, password: string) => {
-    const usersJson = await AsyncStorage.getItem(USERS_KEY);
-    const users: Array<User & { password: string }> = JSON.parse(usersJson || "[]");
-    const exists = users.find((u) => u.email.toLowerCase() === email.toLowerCase());
-    if (exists) throw new Error("An account with this email already exists.");
-    const newUser: User & { password: string } = {
-      id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const uid = userCredential.user.uid;
+
+    const newUser: Omit<User, "id"> = {
       name,
-      email,
-      role: "student",
+      email: email.toLowerCase(),
+      role: "student", // default role
       createdAt: new Date().toISOString(),
-      password,
     };
-    users.push(newUser);
-    await AsyncStorage.setItem(USERS_KEY, JSON.stringify(users));
-    const { password: _, ...userWithoutPassword } = newUser;
-    await AsyncStorage.setItem(CURRENT_USER_KEY, JSON.stringify(userWithoutPassword));
-    setUser(userWithoutPassword);
+
+    // Store additional user data in Firestore
+    await setDoc(doc(db, "users", uid), newUser);
+    // onAuthStateChanged will pick this up
   };
 
   const logout = async () => {
-    await AsyncStorage.removeItem(CURRENT_USER_KEY);
-    setUser(null);
+    await signOut(auth);
   };
 
   const value = useMemo(

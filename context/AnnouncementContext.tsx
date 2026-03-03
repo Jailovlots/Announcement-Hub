@@ -1,5 +1,16 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, ReactNode } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import {
+  collection,
+  doc,
+  setDoc,
+  updateDoc,
+  deleteDoc,
+  onSnapshot,
+  query,
+  orderBy,
+  getDocs
+} from "firebase/firestore";
+import { db } from "../lib/firebase";
 
 export type Category = "Academic" | "Events" | "Emergency" | "General";
 
@@ -23,8 +34,6 @@ interface AnnouncementContextValue {
 }
 
 const AnnouncementContext = createContext<AnnouncementContextValue | null>(null);
-
-const ANNOUNCEMENTS_KEY = "@zdspgc_announcements";
 
 const SEED_ANNOUNCEMENTS: Announcement[] = [
   {
@@ -66,53 +75,68 @@ export function AnnouncementProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    load();
+    // Check and seed if collection is empty
+    const seedDatabase = async () => {
+      try {
+        const q = query(collection(db, "announcements"));
+        const snapshot = await getDocs(q);
+        if (snapshot.empty) {
+          console.log("Seeding announcements...");
+          for (const item of SEED_ANNOUNCEMENTS) {
+            await setDoc(doc(db, "announcements", item.id), item);
+          }
+        }
+      } catch (e) {
+        console.error("Error seeding:", e);
+      }
+    };
+    seedDatabase().then(() => {
+      subscribeToAnnouncements();
+    });
   }, []);
 
-  const load = async () => {
-    try {
-      const json = await AsyncStorage.getItem(ANNOUNCEMENTS_KEY);
-      if (json) {
-        setAnnouncements(JSON.parse(json));
-      } else {
-        await AsyncStorage.setItem(ANNOUNCEMENTS_KEY, JSON.stringify(SEED_ANNOUNCEMENTS));
-        setAnnouncements(SEED_ANNOUNCEMENTS);
-      }
-    } catch (e) {
-      console.error("Load announcements error:", e);
-    } finally {
+  const subscribeToAnnouncements = () => {
+    const q = query(collection(db, "announcements"), orderBy("createdAt", "desc"));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const items: Announcement[] = [];
+      snapshot.forEach((doc) => {
+        items.push({ id: doc.id, ...doc.data() } as Announcement);
+      });
+      setAnnouncements(items);
       setIsLoading(false);
-    }
-  };
+    }, (error) => {
+      console.error("Firestore snapshot error:", error);
+      setIsLoading(false);
+    });
 
-  const save = async (data: Announcement[]) => {
-    await AsyncStorage.setItem(ANNOUNCEMENTS_KEY, JSON.stringify(data));
-    setAnnouncements(data);
+    return unsubscribe;
   };
 
   const addAnnouncement = async (data: Omit<Announcement, "id" | "createdAt">) => {
+    const newId = Date.now().toString() + Math.random().toString(36).substr(2, 9);
     const newItem: Announcement = {
       ...data,
-      id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+      id: newId,
       createdAt: new Date().toISOString(),
     };
-    const updated = [newItem, ...announcements];
-    await save(updated);
+
+    await setDoc(doc(db, "announcements", newId), newItem);
   };
 
   const updateAnnouncement = async (id: string, data: Partial<Omit<Announcement, "id">>) => {
-    const updated = announcements.map((a) => (a.id === id ? { ...a, ...data } : a));
-    await save(updated);
+    const docRef = doc(db, "announcements", id);
+    // Remove undefined values
+    const cleanData = Object.fromEntries(Object.entries(data).filter(([_, v]) => v !== undefined));
+    await updateDoc(docRef, cleanData);
   };
 
   const deleteAnnouncement = async (id: string) => {
-    const updated = announcements.filter((a) => a.id !== id);
-    await save(updated);
+    await deleteDoc(doc(db, "announcements", id));
   };
 
   const refresh = async () => {
-    setIsLoading(true);
-    await load();
+    // Realtime listeners don't truly "refresh", but we can restate loading sequence
+    // The feed handles live updates automatically.
   };
 
   const value = useMemo(
