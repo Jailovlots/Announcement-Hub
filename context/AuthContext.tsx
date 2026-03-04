@@ -1,105 +1,137 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, ReactNode } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import {
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  signOut,
-  onAuthStateChanged,
-  User as FirebaseUser,
-} from "firebase/auth";
-import { doc, getDoc, setDoc } from "firebase/firestore";
-import { auth, db } from "../lib/firebase";
+import { Platform } from "react-native";
+import Constants from "expo-constants";
 
 export type UserRole = "admin" | "student";
 
 export interface User {
   id: string;
-  name: string;
-  email: string;
+  username: string;
   role: UserRole;
-  createdAt: string;
 }
 
 interface AuthContextValue {
   user: User | null;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string) => Promise<void>;
+  login: (username: string, password: string) => Promise<void>;
+  register: (username: string, password: string) => Promise<void>;
+  updateProfile: (data: { username?: string; currentPassword?: string; newPassword?: string }) => Promise<void>;
   logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-const CURRENT_USER_KEY = "@zdspgc_current_user"; // Optional: keep for really fast startup if offline
+const CURRENT_USER_KEY = "@zdspgc_current_user";
+
+// Use debugger host for mobile, localhost for web
+const debuggerHost = Constants.expoConfig?.hostUri?.split(':').shift();
+const API_BASE = Platform.OS === "web" || !debuggerHost
+  ? "http://localhost:5001"
+  : `http://${debuggerHost}:5001`;
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Attempt fast local load
-    AsyncStorage.getItem(CURRENT_USER_KEY).then((json) => {
-      if (json && !user) {
-        setUser(JSON.parse(json));
-      }
-    });
-
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+    const initAuth = async () => {
       try {
-        if (firebaseUser) {
-          // Fetch user details from Firestore
-          const userDoc = await getDoc(doc(db, "users", firebaseUser.uid));
-          if (userDoc.exists()) {
-            const userData = userDoc.data() as Omit<User, "id">;
-            const fullUser: User = { id: firebaseUser.uid, ...userData };
-            setUser(fullUser);
-            await AsyncStorage.setItem(CURRENT_USER_KEY, JSON.stringify(fullUser));
-          } else {
-            console.warn("User document not found in Firestore.");
-            setUser(null);
-            await AsyncStorage.removeItem(CURRENT_USER_KEY);
-          }
+        // Verify session with server
+        const res = await fetch(`${API_BASE}/api/user`, {
+          credentials: 'include'
+        });
+        if (res.ok) {
+          const userData = await res.json();
+          setUser(userData);
+          await AsyncStorage.setItem(CURRENT_USER_KEY, JSON.stringify(userData));
         } else {
           setUser(null);
           await AsyncStorage.removeItem(CURRENT_USER_KEY);
         }
       } catch (e) {
-        console.error("Auth state change error:", e);
+        console.error("Auth init error:", e);
       } finally {
         setIsLoading(false);
       }
-    });
-
-    return () => unsubscribe();
-  }, []);
-
-  const login = async (email: string, password: string) => {
-    await signInWithEmailAndPassword(auth, email, password);
-    // onAuthStateChanged will handle fetching Firestore user data
-  };
-
-  const register = async (name: string, email: string, password: string) => {
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    const uid = userCredential.user.uid;
-
-    const newUser: Omit<User, "id"> = {
-      name,
-      email: email.toLowerCase(),
-      role: "student", // default role
-      createdAt: new Date().toISOString(),
     };
 
-    // Store additional user data in Firestore
-    await setDoc(doc(db, "users", uid), newUser);
-    // onAuthStateChanged will pick this up
+    initAuth();
+  }, []);
+
+  const login = async (username: string, password: string) => {
+    const res = await fetch(`${API_BASE}/api/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password }),
+      credentials: 'include'
+    });
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      throw new Error(errorText || "Login failed");
+    }
+
+    const userData = await res.json();
+    setUser(userData);
+    await AsyncStorage.setItem(CURRENT_USER_KEY, JSON.stringify(userData));
+  };
+
+  const register = async (username: string, password: string) => {
+    const res = await fetch(`${API_BASE}/api/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password, role: "student" }),
+      credentials: 'include'
+    });
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      throw new Error(errorText || "Registration failed");
+    }
+
+    const userData = await res.json();
+    setUser(userData);
+    await AsyncStorage.setItem(CURRENT_USER_KEY, JSON.stringify(userData));
+  };
+
+  const updateProfile = async (data: { username?: string; currentPassword?: string; newPassword?: string }) => {
+    const res = await fetch(`${API_BASE}/api/user`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+      credentials: 'include'
+    });
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      try {
+        const parsed = JSON.parse(errorText);
+        if (Array.isArray(parsed) && parsed[0]?.message) {
+          throw new Error(parsed[0].message);
+        }
+      } catch (e) {
+        // Not JSON
+      }
+      throw new Error(errorText || "Profile update failed");
+    }
+
+    const userData = await res.json();
+    setUser(userData);
+    await AsyncStorage.setItem(CURRENT_USER_KEY, JSON.stringify(userData));
   };
 
   const logout = async () => {
-    await signOut(auth);
+    await fetch(`${API_BASE}/api/logout`, {
+      method: "POST",
+      credentials: 'include'
+    });
+    setUser(null);
+    await AsyncStorage.removeItem(CURRENT_USER_KEY);
   };
 
   const value = useMemo(
-    () => ({ user, isLoading, login, register, logout }),
+    () => ({ user, isLoading, login, register, updateProfile, logout }),
     [user, isLoading]
   );
 

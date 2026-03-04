@@ -46,11 +46,22 @@ export default function AdminDashboard() {
         <View style={styles.heroTop}>
           <View>
             <Text style={styles.heroGreeting}>Admin Panel</Text>
-            <Text style={styles.heroName}>{user?.name}</Text>
+            <Text style={styles.heroName}>{user?.username}</Text>
           </View>
-          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-            <Ionicons name="log-out-outline" size={20} color={Colors.white} />
-          </TouchableOpacity>
+          <View style={{ flexDirection: "row", gap: 10 }}>
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push("/profile");
+              }}
+            >
+              <Ionicons name="settings-outline" size={20} color={Colors.white} />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.actionButton} onPress={handleLogout}>
+              <Ionicons name="log-out-outline" size={20} color={Colors.white} />
+            </TouchableOpacity>
+          </View>
         </View>
 
         <View style={styles.statsRow}>
@@ -170,7 +181,7 @@ const styles = StyleSheet.create({
     color: Colors.white,
     marginTop: 2,
   },
-  logoutButton: {
+  actionButton: {
     width: 40,
     height: 40,
     borderRadius: 12,

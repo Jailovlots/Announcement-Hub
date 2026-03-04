@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -20,7 +20,13 @@ import { Colors } from "@/constants/colors";
 
 export default function LoginScreen() {
   const insets = useSafeAreaInsets();
-  const { login } = useAuth();
+  const { login, user } = useAuth();
+
+  useEffect(() => {
+    if (user) {
+      router.replace(user.role === "admin" ? "/admin" : "/student");
+    }
+  }, [user]);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -152,7 +158,7 @@ export default function LoginScreen() {
         <View style={styles.adminHint}>
           <Ionicons name="information-circle-outline" size={14} color={Colors.textLight} />
           <Text style={styles.adminHintText}>
-            Admin: admin@zdspgc.edu / admin123
+            Admin: admin / adminpassword123
           </Text>
         </View>
       </ScrollView>

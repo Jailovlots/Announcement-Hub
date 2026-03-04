@@ -27,6 +27,7 @@ function RootLayoutNav() {
       <Stack.Screen name="register" />
       <Stack.Screen name="student" />
       <Stack.Screen name="admin" />
+      <Stack.Screen name="profile" />
     </Stack>
   );
 }

@@ -22,8 +22,22 @@ export default function ManageScreen() {
   const { announcements, deleteAnnouncement, isLoading, refresh } = useAnnouncements();
   const [refreshing, setRefreshing] = useState(false);
 
-  const handleDelete = (id: string, title: string) => {
+  const handleDelete = async (id: string, title: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+    if (Platform.OS === 'web') {
+      const confirm = window.confirm(`Are you sure you want to delete "${title}"?`);
+      if (confirm) {
+        try {
+          await deleteAnnouncement(id);
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        } catch (error: any) {
+          window.alert(error.message || "Failed to delete");
+        }
+      }
+      return;
+    }
+
     Alert.alert(
       "Delete Announcement",
       `Are you sure you want to delete "${title}"?`,
@@ -33,8 +47,12 @@ export default function ManageScreen() {
           text: "Delete",
           style: "destructive",
           onPress: async () => {
-            await deleteAnnouncement(id);
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            try {
+              await deleteAnnouncement(id);
+              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            } catch (error: any) {
+              Alert.alert("Error", error.message || "Failed to delete");
+            }
           },
         },
       ]
@@ -89,7 +107,7 @@ export default function ManageScreen() {
             showActions
             onEdit={() => {
               Haptics.selectionAsync();
-              router.push({ pathname: "/admin/edit/[id]", params: { id: item.id } });
+              router.push(`/admin/edit/${item.id}`);
             }}
             onDelete={() => handleDelete(item.id, item.title)}
           />

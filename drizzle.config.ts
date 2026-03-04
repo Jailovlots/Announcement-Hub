@@ -1,7 +1,22 @@
 import { defineConfig } from "drizzle-kit";
+import * as dotenv from 'dotenv';
+import * as fs from 'fs';
+import * as path from 'path';
 
-if (!process.env.DATABASE_URL) {
-  throw new Error("DATABASE_URL, ensure the database is provisioned");
+let dbUrl = process.env.DATABASE_URL;
+
+if (!dbUrl) {
+  try {
+    const envConfig = dotenv.parse(fs.readFileSync(path.resolve(process.cwd(), '.env')));
+    dbUrl = envConfig.DATABASE_URL;
+  } catch {
+    console.warn("Could not load from .env file");
+  }
+}
+
+if (!dbUrl) {
+  console.warn("DATABASE_URL not set, using placeholder for typecheck/lint");
+  dbUrl = "postgresql://postgres:postgres@localhost:5432/placeholder";
 }
 
 export default defineConfig({
@@ -9,6 +24,6 @@ export default defineConfig({
   schema: "./shared/schema.ts",
   dialect: "postgresql",
   dbCredentials: {
-    url: process.env.DATABASE_URL,
+    url: dbUrl,
   },
 });

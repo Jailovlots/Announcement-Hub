@@ -65,12 +65,23 @@ export default function StudentDashboard() {
       <View style={[styles.header, { paddingTop: topPad + 12 }]}>
         <View style={styles.headerTop}>
           <View>
-            <Text style={styles.greeting}>Hello, {user?.name?.split(" ")[0]}</Text>
+            <Text style={styles.greeting}>Hello, {user?.username}</Text>
             <Text style={styles.headerTitle}>Announcements</Text>
           </View>
-          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-            <Ionicons name="log-out-outline" size={22} color={Colors.primary} />
-          </TouchableOpacity>
+          <View style={{ flexDirection: "row", gap: 8, marginTop: 4 }}>
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push("/profile");
+              }}
+            >
+              <Ionicons name="settings-outline" size={22} color={Colors.primary} />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.actionButton} onPress={handleLogout}>
+              <Ionicons name="log-out-outline" size={22} color={Colors.primary} />
+            </TouchableOpacity>
+          </View>
         </View>
 
         <View style={styles.searchRow}>
@@ -142,7 +153,7 @@ export default function StudentDashboard() {
         renderItem={({ item }) => (
           <AnnouncementCard
             announcement={item}
-            onPress={() => router.push({ pathname: "/student/announcement/[id]", params: { id: item.id } })}
+            onPress={() => router.push(`/student/announcement/${item.id}`)}
           />
         )}
         ListEmptyComponent={
@@ -194,14 +205,13 @@ const styles = StyleSheet.create({
     fontSize: 26,
     color: Colors.textPrimary,
   },
-  logoutButton: {
+  actionButton: {
     width: 40,
     height: 40,
     borderRadius: 12,
     backgroundColor: "#FDECEA",
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 4,
   },
   searchRow: {
     flexDirection: "row",

@@ -48,12 +48,3 @@ export const Colors = {
   } as Record<string, string>,
 };
 
-export default {
-  light: {
-    text: TEXT_PRIMARY,
-    background: BG_CREAM,
-    tint: PRIMARY,
-    tabIconDefault: TEXT_LIGHT,
-    tabIconSelected: PRIMARY,
-  },
-};

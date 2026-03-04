@@ -1,6 +1,8 @@
+import "dotenv/config";
 import express from "express";
 import type { Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
+import { setupAuth } from "./auth";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -34,11 +36,16 @@ function setupCors(app: express.Application) {
       origin?.startsWith("http://localhost:") ||
       origin?.startsWith("http://127.0.0.1:");
 
-    if (origin && (origins.has(origin) || isLocalhost)) {
+    const isLocalIp =
+      origin?.match(/^http:\/\/192\.168\.\d+\.\d+:/) ||
+      origin?.match(/^http:\/\/10\.\d+\.\d+\.\d+:/) ||
+      origin?.match(/^http:\/\/172\.(1[6-9]|2\d|3[0-1])\.\d+\.\d+:/);
+
+    if (origin && (origins.has(origin) || isLocalhost || isLocalIp)) {
       res.header("Access-Control-Allow-Origin", origin);
       res.header(
         "Access-Control-Allow-Methods",
-        "GET, POST, PUT, DELETE, OPTIONS",
+        "GET, POST, PUT, PATCH, DELETE, OPTIONS",
       );
       res.header("Access-Control-Allow-Headers", "Content-Type");
       res.header("Access-Control-Allow-Credentials", "true");
@@ -230,13 +237,13 @@ function setupErrorHandler(app: express.Application) {
   setupBodyParsing(app);
   setupRequestLogging(app);
 
+  setupAuth(app);
   configureExpoAndLanding(app);
-
   const server = await registerRoutes(app);
 
   setupErrorHandler(app);
 
-  const port = parseInt(process.env.PORT || "5000", 10);
+  const port = parseInt(process.env.PORT || "5001", 10);
   server.listen(
     {
       port,
