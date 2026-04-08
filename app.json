@@ -21,13 +21,13 @@
       "package": "com.myapp",
       "adaptiveIcon": {
         "backgroundColor": "#F7EDD8",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/announce.jpg",
-        "monochromeImage": "./assets/images/ann-back.png"
+        "foregroundImage": "./assets/images/android-icon-background.png",
+        "backgroundImage": "./assets/images/Announce-icon.png",
+        "monochromeImage": "./assets/images/Announce-monochrome.png"
       }
     },
     "web": {
-      "favicon": "./assets/images/ann-back.png"
+      "favicon": "./assets/images/Announce-icon.png"
     },
     "plugins": [
       [

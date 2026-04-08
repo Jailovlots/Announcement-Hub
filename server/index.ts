@@ -248,7 +248,7 @@ function setupErrorHandler(app: express.Application) {
     {
       port,
       host: "0.0.0.0",
-      reusePort: true,
+      ...(process.platform !== "win32" ? { reusePort: true } : {}),
     },
     () => {
       log(`express server serving on port ${port}`);
