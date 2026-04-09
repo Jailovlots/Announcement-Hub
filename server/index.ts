@@ -241,6 +241,11 @@ function setupErrorHandler(app: express.Application) {
   configureExpoAndLanding(app);
   const server = await registerRoutes(app);
 
+  // Fallback 404 handler for API routes
+  app.use("/api", (req, res) => {
+    res.status(404).json({ message: `API route ${req.method} ${req.originalUrl} not found` });
+  });
+
   setupErrorHandler(app);
 
   const port = parseInt(process.env.PORT || "5001", 10);

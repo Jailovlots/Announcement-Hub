@@ -62,10 +62,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       body: JSON.stringify({ username, password }),
       credentials: 'include'
     });
-
+    const contentType = res.headers.get("content-type");
     if (!res.ok) {
       const errorText = await res.text();
+      if (contentType?.includes("text/html")) {
+        throw new Error("Server returned an invalid response (HTML). Please check your network or server status.");
+      }
+      // If it's JSON error message
+      if (contentType?.includes("application/json")) {
+        try {
+          const errorJson = JSON.parse(errorText);
+          throw new Error(errorJson.message || "Login failed");
+        } catch (e) { /* fallback to errorText */ }
+      }
       throw new Error(errorText || "Login failed");
+    }
+
+    if (!contentType?.includes("application/json")) {
+      throw new Error("Expected JSON response but received: " + (contentType || "unknown"));
     }
 
     const userData = await res.json();
@@ -80,10 +94,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       body: JSON.stringify({ username, password, role: "student" }),
       credentials: 'include'
     });
-
+    const contentType = res.headers.get("content-type");
     if (!res.ok) {
       const errorText = await res.text();
+      if (contentType?.includes("text/html")) {
+        throw new Error("Server returned an invalid response (HTML). Please check your network or server status.");
+      }
+      if (contentType?.includes("application/json")) {
+        try {
+          const errorJson = JSON.parse(errorText);
+          throw new Error(errorJson.message || "Registration failed");
+        } catch (e) { /* fallback to errorText */ }
+      }
       throw new Error(errorText || "Registration failed");
+    }
+
+    if (!contentType?.includes("application/json")) {
+      throw new Error("Expected JSON response but received: " + (contentType || "unknown"));
     }
 
     const userData = await res.json();

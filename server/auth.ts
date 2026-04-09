@@ -81,7 +81,7 @@ export function setupAuth(app: Express) {
         try {
             const existingUser = await storage.getUserByUsername(req.body.username);
             if (existingUser) {
-                return res.status(400).send("Username already exists");
+                return res.status(400).json({ message: "Username already exists" });
             }
 
             const hashedPassword = await hashPassword(req.body.password);
@@ -102,7 +102,7 @@ export function setupAuth(app: Express) {
     app.post("/api/login", (req, res, next) => {
         passport.authenticate("local", (err: any, user: any) => {
             if (err) return next(err);
-            if (!user) return res.status(401).send("Invalid username or password");
+            if (!user) return res.status(401).json({ message: "Invalid username or password" });
             req.login(user, (err) => {
                 if (err) return next(err);
                 res.status(200).json(user);
@@ -139,7 +139,7 @@ export function setupAuth(app: Express) {
             if (username && username !== req.user.username) {
                 const existing = await storage.getUserByUsername(username);
                 if (existing) {
-                    return res.status(400).send("Username already exists");
+                    return res.status(400).json({ message: "Username already exists" });
                 }
                 updateData.username = username;
             }
@@ -148,13 +148,13 @@ export function setupAuth(app: Express) {
             if (newPassword && currentPassword) {
                 const isValidPassword = await comparePasswords(currentPassword, req.user.password);
                 if (!isValidPassword) {
-                    return res.status(400).send("Incorrect current password");
+                    return res.status(400).json({ message: "Incorrect current password" });
                 }
                 updateData.password = await hashPassword(newPassword);
             }
 
             if (Object.keys(updateData).length === 0) {
-                return res.status(400).send("No updates provided");
+                return res.status(400).json({ message: "No updates provided" });
             }
 
             const updatedUser = await storage.updateUser(req.user.id, updateData);

@@ -155,12 +155,7 @@ export default function LoginScreen() {
           </TouchableOpacity>
         </View>
 
-        <View style={styles.adminHint}>
-          <Ionicons name="information-circle-outline" size={14} color={Colors.textLight} />
-          <Text style={styles.adminHintText}>
-            Admin: admin / adminpassword123
-          </Text>
-        </View>
+
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -329,22 +324,5 @@ const styles = StyleSheet.create({
     fontFamily: "Poppins_600SemiBold",
     fontSize: 15,
     color: Colors.primary,
-  },
-  adminHint: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    marginTop: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    backgroundColor: Colors.bgCard,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: Colors.borderLight,
-  },
-  adminHintText: {
-    fontFamily: "Poppins_400Regular",
-    fontSize: 12,
-    color: Colors.textLight,
   },
 });

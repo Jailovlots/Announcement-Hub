@@ -21,7 +21,7 @@
       "package": "com.myapp",
       "adaptiveIcon": {
         "backgroundColor": "#F7EDD8",
-        "foregroundImage": "./assets/images/android-icon-background.png",
+        "foregroundImage": "./assets/images/Announce-icon.png",
         "backgroundImage": "./assets/images/Announce-icon.png",
         "monochromeImage": "./assets/images/Announce-monochrome.png"
       },
