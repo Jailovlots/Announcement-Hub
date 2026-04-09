@@ -9,6 +9,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(announcements);
   });
 
+  // Simplified route as requested by user
+  app.get("/announcements", async (_req, res) => {
+    const announcements = await storage.getAnnouncements();
+    res.json(announcements);
+  });
+
   app.post("/api/announcements", async (req, res) => {
     if (!req.isAuthenticated() || req.user?.role !== "admin") {
       return res.status(403).send("Unauthorized");
