@@ -83,6 +83,28 @@ export function setupAuth(app: Express) {
         }
     });
 
+    async function seedAdmin() {
+        try {
+            const adminUser = await storage.getUserByUsername("admin");
+            if (!adminUser) {
+                const hashedPassword = await hashPassword("adminpassword123");
+                await storage.createUser({
+                    username: "admin",
+                    password: hashedPassword,
+                    role: "admin",
+                });
+                console.log("[Auth] Default admin account seeded successfully.");
+            } else {
+                console.log("[Auth] Admin account already exists.");
+            }
+        } catch (error: any) {
+            console.error(`[Auth] Failed to seed admin account: ${error.message}`);
+        }
+    }
+
+    // Run seeding
+    seedAdmin();
+
     app.post("/api/register", async (req, res, next) => {
         try {
             console.log(`[Auth] Registration request received for: ${req.body.username}`);
@@ -98,10 +120,11 @@ export function setupAuth(app: Express) {
             }
 
             const hashedPassword = await hashPassword(req.body.password);
+            // SECURITY: Forced to student role for public registration
             const user = await storage.createUser({
-                ...req.body,
+                username: req.body.username,
                 password: hashedPassword,
-                role: req.body.role || "student",
+                role: "student",
             });
 
             req.login(user, (err) => {
@@ -115,6 +138,38 @@ export function setupAuth(app: Express) {
         } catch (error: any) {
             console.error(`[Auth] Fatal registration error: ${error.message}`);
             res.status(500).json({ message: "Internal server error during registration" });
+        }
+    });
+
+    // ADMIN ONLY: Create any user (including other admins)
+    app.post("/api/admin/create-user", async (req, res, next) => {
+        try {
+            if (!req.isAuthenticated() || req.user?.role !== "admin") {
+                return res.status(403).json({ message: "Unauthorized. Admin access required." });
+            }
+
+            const { username, password, role } = req.body;
+            if (!username || !password || !role) {
+                return res.status(400).json({ message: "Username, password and role are required" });
+            }
+
+            const existingUser = await storage.getUserByUsername(username);
+            if (existingUser) {
+                return res.status(400).json({ message: "Username already exists" });
+            }
+
+            const hashedPassword = await hashPassword(password);
+            const user = await storage.createUser({
+                username,
+                password: hashedPassword,
+                role: role as "admin" | "student",
+            });
+
+            console.log(`[Auth] Admin ${req.user.username} created new ${role}: ${username}`);
+            res.status(201).json(user);
+        } catch (error: any) {
+            console.error(`[Auth] Admin user creation error: ${error.message}`);
+            res.status(500).json({ message: "Internal server error" });
         }
     });
 
