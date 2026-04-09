@@ -238,8 +238,8 @@ function setupErrorHandler(app: express.Application) {
   setupRequestLogging(app);
 
   setupAuth(app);
-  configureExpoAndLanding(app);
   const server = await registerRoutes(app);
+  configureExpoAndLanding(app);
 
   // Fallback 404 handler for API routes
   app.use("/api", (req, res) => {

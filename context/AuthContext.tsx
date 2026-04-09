@@ -56,6 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = async (username: string, password: string) => {
+    console.log(`[Auth] Attempting login at: ${API_BASE}/api/login`);
     const res = await fetch(`${API_BASE}/api/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -66,6 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!res.ok) {
       const errorText = await res.text();
       if (contentType?.includes("text/html")) {
+        console.error(`[Auth] Received HTML instead of JSON from ${API_BASE}/api/login. Body snippet: ${errorText.substring(0, 200)}`);
         throw new Error("Server returned an invalid response (HTML). Please check your network or server status.");
       }
       // If it's JSON error message
@@ -88,6 +90,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const register = async (username: string, password: string) => {
+    console.log(`[Auth] Attempting register at: ${API_BASE}/api/register`);
     const res = await fetch(`${API_BASE}/api/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -98,6 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!res.ok) {
       const errorText = await res.text();
       if (contentType?.includes("text/html")) {
+        console.error(`[Auth] Received HTML instead of JSON from ${API_BASE}/api/register. Body snippet: ${errorText.substring(0, 200)}`);
         throw new Error("Server returned an invalid response (HTML). Please check your network or server status.");
       }
       if (contentType?.includes("application/json")) {

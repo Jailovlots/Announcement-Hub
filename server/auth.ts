@@ -53,6 +53,12 @@ export function setupAuth(app: Express) {
     app.use(passport.initialize());
     app.use(passport.session());
 
+    // Ensure all /api responses have the correct content-type
+    app.use("/api", (req, res, next) => {
+        res.setHeader("Content-Type", "application/json");
+        next();
+    });
+
     passport.use(
         new LocalStrategy(async (username, password, done) => {
             try {
