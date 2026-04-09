@@ -84,17 +84,16 @@ function setupRequestLogging(app: express.Application) {
     };
 
     res.on("finish", () => {
-      if (!path.startsWith("/api")) return;
-
       const duration = Date.now() - start;
+      const contentType = res.get("Content-Type") || "unknown";
 
-      let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
+      let logLine = `${req.method} ${req.originalUrl} - Status: ${res.statusCode} - Type: ${contentType} - ${duration}ms`;
       if (capturedJsonResponse) {
         logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
       }
 
-      if (logLine.length > 80) {
-        logLine = logLine.slice(0, 79) + "…";
+      if (logLine.length > 150) {
+        logLine = logLine.slice(0, 149) + "…";
       }
 
       log(logLine);
@@ -156,9 +155,6 @@ function configureExpoAndLanding(app: express.Application) {
       return serveExpoManifest(platform, res);
     }
 
-    if (req.path === "/") {
-      return res.send("Backend is running 🚀");
-    }
 
     next();
   });
@@ -196,6 +192,19 @@ function setupErrorHandler(app: express.Application) {
   setupRequestLogging(app);
 
   setupAuth(app);
+  
+  app.get("/", (req, res) => {
+    res.setHeader("Content-Type", "text/html");
+    res.send(`
+      <div style="height: 100vh; display: flex; align-items: center; justify-content: center; font-family: sans-serif; background: #fafafa;">
+        <div style="text-align: center; padding: 40px; background: white; border-radius: 12px; shadow: 0 4px 6px rgba(0,0,0,0.1); border: 1px solid #eee;">
+          <h1 style="margin: 0; color: #333;">ZDSPGC Backend</h1>
+          <p style="color: #666; margin-top: 10px;">Status: <span style="color: #4CAF50; font-weight: bold;">Running 🚀</span></p>
+        </div>
+      </div>
+    `);
+  });
+
   const server = await registerRoutes(app);
   configureExpoAndLanding(app);
 

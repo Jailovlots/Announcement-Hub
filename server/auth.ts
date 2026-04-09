@@ -85,8 +85,15 @@ export function setupAuth(app: Express) {
 
     app.post("/api/register", async (req, res, next) => {
         try {
+            console.log(`[Auth] Registration request received for: ${req.body.username}`);
+            
+            if (!req.body.username || !req.body.password) {
+                return res.status(400).json({ message: "Username and password are required" });
+            }
+
             const existingUser = await storage.getUserByUsername(req.body.username);
             if (existingUser) {
+                console.warn(`[Auth] Registration failed: Username ${req.body.username} already exists`);
                 return res.status(400).json({ message: "Username already exists" });
             }
 
@@ -94,14 +101,20 @@ export function setupAuth(app: Express) {
             const user = await storage.createUser({
                 ...req.body,
                 password: hashedPassword,
+                role: req.body.role || "student",
             });
 
             req.login(user, (err) => {
-                if (err) return next(err);
+                if (err) {
+                    console.error(`[Auth] Passport login error during registration: ${err.message}`);
+                    return next(err);
+                }
+                console.log(`[Auth] Registration successful for: ${user.username}`);
                 res.status(201).json(user);
             });
-        } catch (err) {
-            next(err);
+        } catch (error: any) {
+            console.error(`[Auth] Fatal registration error: ${error.message}`);
+            res.status(500).json({ message: "Internal server error during registration" });
         }
     });
 

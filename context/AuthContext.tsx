@@ -59,7 +59,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     console.log(`[Auth] Attempting login at: ${API_BASE}/api/login`);
     const res = await fetch(`${API_BASE}/api/login`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { 
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
       body: JSON.stringify({ username, password }),
       credentials: 'include'
     });
@@ -93,7 +96,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     console.log(`[Auth] Attempting register at: ${API_BASE}/api/register`);
     const res = await fetch(`${API_BASE}/api/register`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { 
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
       body: JSON.stringify({ username, password, role: "student" }),
       credentials: 'include'
     });
@@ -125,7 +131,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const updateProfile = async (data: { username?: string; currentPassword?: string; newPassword?: string }) => {
     const res = await fetch(`${API_BASE}/api/user`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: { 
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
       body: JSON.stringify(data),
       credentials: 'include'
     });
