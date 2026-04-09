@@ -15,22 +15,32 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
+  private checkDb() {
+    if (!db) {
+      throw new Error("Database connection is not available. Please check your DATABASE_URL environment variable.");
+    }
+  }
+
   async getUser(id: string): Promise<User | undefined> {
+    this.checkDb();
     const [user] = await db.select().from(users).where(eq(users.id, id));
     return user;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
+    this.checkDb();
     const [user] = await db.select().from(users).where(eq(users.username, username));
     return user;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
+    this.checkDb();
     const [user] = await db.insert(users).values(insertUser as any).returning();
     return user;
   }
 
   async updateUser(id: string, data: Partial<InsertUser>): Promise<User> {
+    this.checkDb();
     const [user] = await db.update(users)
       .set(data as any)
       .where(eq(users.id, id))
@@ -39,15 +49,18 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAnnouncements(): Promise<Announcement[]> {
+    this.checkDb();
     return await db.select().from(announcements).orderBy(desc(announcements.createdAt));
   }
 
   async createAnnouncement(insertAnnouncement: InsertAnnouncement): Promise<Announcement> {
+    this.checkDb();
     const [announcement] = await db.insert(announcements).values(insertAnnouncement as any).returning();
     return announcement;
   }
 
   async updateAnnouncement(id: string, updateData: Partial<InsertAnnouncement>): Promise<Announcement> {
+    this.checkDb();
     const [announcement] = await db.update(announcements)
       .set(updateData as any)
       .where(eq(announcements.id, id))
@@ -56,6 +69,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteAnnouncement(id: string): Promise<void> {
+    this.checkDb();
     await db.delete(announcements).where(eq(announcements.id, id));
   }
 }

@@ -3,11 +3,21 @@ import { Pool } from 'pg';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import * as schema from '@shared/schema';
 
+let pool: Pool | null = null;
+let db: any = null;
+
 if (!process.env.DATABASE_URL) {
-    throw new Error(
-        "DATABASE_URL must be set. Did you forget to provision a database?",
+    console.warn(
+        "WARNING: DATABASE_URL is not set. Database features will be unavailable. Please set this in your environment variables.",
     );
+} else {
+    try {
+        pool = new Pool({ connectionString: process.env.DATABASE_URL });
+        db = drizzle(pool, { schema });
+        console.log("Database connection initialized successfully.");
+    } catch (error: any) {
+        console.error("FAILED to initialize database connection:", error.message);
+    }
 }
 
-export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-export const db = drizzle(pool, { schema });
+export { pool, db };
