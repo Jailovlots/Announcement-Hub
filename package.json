@@ -1,6 +1,6 @@
 {
   "name": "expo-app",
-  "main": "expo-router/entry",
+  "main": "server.js",
   "version": "1.0.0",
   "scripts": {
     "postinstall": "patch-package",
@@ -11,7 +11,7 @@
     "server:build": "esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=server_dist",
     "server:prod": "cross-env NODE_ENV=production node server_dist/index.js",
     "db:push": "node -r dotenv/config ./node_modules/drizzle-kit/bin.cjs push",
-    "start": "npx expo start",
+    "start": "node server.js",
     "lint": "npx expo lint",
     "lint:fix": "npx expo lint --fix"
   },

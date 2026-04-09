@@ -7,7 +7,7 @@ import Constants from "expo-constants";
  */
 
 // The Render backend URL
-export const RENDER_API_URL = "https://announcement-hub-ywiu.onrender.com";
+export const RENDER_API_URL = "https://announcement-hub-1.onrender.com";
 
 // Local development URL detection
 const debuggerHost = Constants.expoConfig?.hostUri?.split(':').shift();

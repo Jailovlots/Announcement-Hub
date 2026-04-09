@@ -194,15 +194,7 @@ function setupErrorHandler(app: express.Application) {
   setupAuth(app);
   
   app.get("/", (req, res) => {
-    res.setHeader("Content-Type", "text/html");
-    res.send(`
-      <div style="height: 100vh; display: flex; align-items: center; justify-content: center; font-family: sans-serif; background: #fafafa;">
-        <div style="text-align: center; padding: 40px; background: white; border-radius: 12px; shadow: 0 4px 6px rgba(0,0,0,0.1); border: 1px solid #eee;">
-          <h1 style="margin: 0; color: #333;">ZDSPGC Backend</h1>
-          <p style="color: #666; margin-top: 10px;">Status: <span style="color: #4CAF50; font-weight: bold;">Running 🚀</span></p>
-        </div>
-      </div>
-    `);
+    res.send("Backend is running 🚀");
   });
 
   // TEST LOGIN ROUTE
@@ -210,7 +202,7 @@ function setupErrorHandler(app: express.Application) {
     console.log("Test Login request received:", req.body);
     res.json({
       success: true,
-      message: "Test Login working (No database check)"
+      message: "Login working"
     });
   });
 
