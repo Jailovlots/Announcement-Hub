@@ -205,6 +205,24 @@ function setupErrorHandler(app: express.Application) {
     `);
   });
 
+  // TEST LOGIN ROUTE
+  app.post("/login", (req, res) => {
+    console.log("Test Login request received:", req.body);
+    res.json({
+      success: true,
+      message: "Test Login working (No database check)"
+    });
+  });
+
+  // TEST REGISTER ROUTE
+  app.post("/register", (req, res) => {
+    console.log("Test Register request received:", req.body);
+    res.json({
+      success: true,
+      message: "Test Register working (No database check)"
+    });
+  });
+
   const server = await registerRoutes(app);
   configureExpoAndLanding(app);
 
