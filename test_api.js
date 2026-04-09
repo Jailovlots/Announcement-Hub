@@ -15,12 +15,11 @@ async function resetAndTest() {
     let pool = new Pool({ connectionString: process.env.DATABASE_URL });
     const hashedPassword = await hashPassword("adminpassword123");
 
-    // reset password
-    await pool.query('UPDATE users SET password = $1 WHERE username = $2', [hashedPassword, 'admin']);
-    await pool.end();
-
     // test APIs
-    const loginRes = await fetch("http://localhost:5001/api/login", {
+    const BASE_URL = process.env.TEST_API_URL || "http://localhost:5001";
+    console.log(`Testing against: ${BASE_URL}`);
+
+    const loginRes = await fetch(`${BASE_URL}/api/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username: "admin", password: "adminpassword123" })

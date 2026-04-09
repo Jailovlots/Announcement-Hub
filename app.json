@@ -24,7 +24,10 @@
         "foregroundImage": "./assets/images/android-icon-background.png",
         "backgroundImage": "./assets/images/Announce-icon.png",
         "monochromeImage": "./assets/images/Announce-monochrome.png"
-      }
+      },
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "favicon": "./assets/images/Announce-icon.png"
@@ -43,6 +46,14 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {
+        "origin": "https://replit.com/"
+      },
+      "eas": {
+        "projectId": "13409429-e94c-4d6a-b3bf-8fab4e61d58b"
+      }
     }
   }
 }

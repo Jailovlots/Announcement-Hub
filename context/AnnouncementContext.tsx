@@ -25,11 +25,7 @@ interface AnnouncementContextValue {
 
 const AnnouncementContext = createContext<AnnouncementContextValue | null>(null);
 
-// Use debugger host for mobile, localhost for web
-const debuggerHost = Constants.expoConfig?.hostUri?.split(':').shift();
-const API_BASE = Platform.OS === "web" || !debuggerHost
-  ? "http://localhost:5001"
-  : `http://${debuggerHost}:5001`;
+import { API_BASE } from "@/constants/Api";
 
 export function AnnouncementProvider({ children }: { children: ReactNode }) {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
